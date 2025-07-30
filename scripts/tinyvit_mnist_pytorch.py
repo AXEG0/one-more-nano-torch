@@ -30,7 +30,7 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 SEED = 42
 
 # Subset sizes (set to None or 0 to use full dataset)
-TRAIN_SUBSET = 2_000
+TRAIN_SUBSET = 10_000
 TEST_SUBSET = 1_000
 
 # Model hyperparams

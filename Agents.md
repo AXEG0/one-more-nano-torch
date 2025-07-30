@@ -2,7 +2,7 @@
 
 0. **Baseline freeze**
 
-   * Keep the existing PyTorch script exactly as is (train = 2 000, test = 1 000).
+   * Keep the existing PyTorch script exactly as is (train = 10 000, test = 1 000).
    * Save one random batch `(X_ref, y_ref)` and its logits after epoch 0 – we’ll reuse these to compare outputs.
    * Note: accuracy \~ 70 % on the subset is sufficient; we are not chasing SOTA numbers.
 
@@ -138,4 +138,4 @@ one-more-nano-torch/
 * **Always compare with `scripts/tinyvit_mnist_pytorch.py`** as long as any Torch code remains in the stack.
 * Forward checks use the saved batch `X_ref`.
 * For training stages we accept divergence in accuracy, **as long as loss goes down** and accuracy stays above random (\~10 %).
-* The 2 000 / 1 000 subset and its \~70 % Torch benchmark remain our reference; we purposefully do **not** raise accuracy targets until after Stage 12.
+* The 10 000 / 1 000 subset and its \~70 % Torch benchmark remain our reference; we purposefully do **not** raise accuracy targets until after Stage 12.
