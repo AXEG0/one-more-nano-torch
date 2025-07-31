@@ -5,6 +5,8 @@
 
 import random
 from time import time
+import sys
+sys.path.append('.')
 
 import torch
 import torch.nn as nn
@@ -12,6 +14,9 @@ import torch.nn.functional as F
 import torchvision
 from torch.utils.data import DataLoader, Subset
 from torchvision import transforms
+
+from src.core.tensor import Tensor
+from src.core.backend import backend
 
 
 def set_seed(seed: int) -> None:
@@ -79,34 +84,16 @@ def main() -> None:
     test_dl = DataLoader(test_ds, BS, shuffle=False, num_workers=2, pin_memory=True)
 
     # -------------------------------------------------------------------
+    # Save a batch for later comparison
+    # -------------------------------------------------------------------
+    X_ref, y_ref = next(iter(train_dl))
+    torch.save((X_ref, y_ref), "scripts/batch_ref.pt")
+
+    # -------------------------------------------------------------------
     # Model
     # -------------------------------------------------------------------
 
-    class TinyViT(nn.Module):
-        def __init__(self, patch=PATCH, dim=DIM, depth=DEPTH, heads=HEADS, mlp_dim=MLP_DIM, num_classes=10):
-            super().__init__()
-            self.patch_conv = nn.Conv2d(1, dim, kernel_size=patch, stride=patch)
-            num_patches = (28 // patch) ** 2
-            self.pos_emb = nn.Parameter(torch.randn(1, num_patches, dim))
-
-            encoder_layer = nn.TransformerEncoderLayer(
-                d_model=dim,
-                nhead=heads,
-                dim_feedforward=mlp_dim,
-                dropout=0.1,
-                batch_first=True,
-                activation="gelu",
-            )
-            self.encoder = nn.TransformerEncoder(encoder_layer, num_layers=depth)
-            self.cls_head = nn.Linear(dim, num_classes)
-
-        def forward(self, x: torch.Tensor) -> torch.Tensor:
-            x = self.patch_conv(x)
-            x = x.flatten(2).transpose(1, 2)
-            x = x + self.pos_emb
-            x = self.encoder(x)
-            x = x.mean(dim=1)
-            return self.cls_head(x)
+    from src.model import TinyViT
 
     model = TinyViT().to(DEVICE)
     opt = torch.optim.AdamW(model.parameters(), lr=LR, weight_decay=WEIGHT_DECAY)
@@ -116,7 +103,7 @@ def main() -> None:
         total, correct, loss_total = 0, 0, 0.0
         for xb, yb in loader:
             xb, yb = xb.to(DEVICE), yb.to(DEVICE)
-            with torch.set_grad_enabled(train):
+            with backend.set_grad_enabled(train):
                 logits = model(xb)
                 loss = F.cross_entropy(logits, yb)
                 if train:
@@ -139,6 +126,12 @@ def main() -> None:
             f"test {te_acc*100:5.2f}% (loss {te_loss:.3f}) | "
             f"{dt:.1f}s",
         )
+        if epoch == 1:
+            model.eval()
+            with torch.no_grad():
+                logits_ref = model(X_ref.to(DEVICE))
+            torch.save(logits_ref, "scripts/logits_ref.pt")
+            torch.save(model.state_dict(), "scripts/model_weights.pt")
 
     print("Done.")
 

@@ -1,1 +1,4 @@
 MNIST/
+
+*.pt
+*.pyc
