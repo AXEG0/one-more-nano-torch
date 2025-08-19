@@ -9,8 +9,6 @@ import sys
 sys.path.append('.')
 
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
 import torchvision
 from torch.utils.data import DataLoader, Subset
 from torchvision import transforms
@@ -105,7 +103,7 @@ def main() -> None:
             xb, yb = xb.to(DEVICE), yb.to(DEVICE)
             with backend.set_grad_enabled(train):
                 logits = model(xb)
-                loss = F.cross_entropy(logits, yb)
+                loss = backend.cross_entropy(logits, yb)
                 if train:
                     opt.zero_grad()
                     loss.backward()

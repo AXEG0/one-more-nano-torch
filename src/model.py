@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 
 from src.core.tensor import Tensor
+from src.core.backend import backend
 
 # Model hyperparams
 PATCH = 4
@@ -31,7 +32,7 @@ class TinyViT(nn.Module):
     def forward(self, x: Tensor) -> Tensor:
         x = self.patch_conv(x)
         x = x.flatten(2).transpose(1, 2)
-        x = x + self.pos_emb
+        x = backend.add(x, self.pos_emb)
         x = self.encoder(x)
-        x = x.mean(dim=1)
+        x = backend.mean(x, dim=1)
         return self.cls_head(x)
